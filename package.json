@@ -1,0 +1,118 @@
+{
+  "name": "@module-federation/mcp-apps",
+  "version": "0.0.6",
+  "type": "module",
+  "description": "MCP Apps Server for rendering Module Federation components as interactive UIs in AI Agents",
+  "license": "MIT",
+  "author": "fengdanping@bytedance.com",
+  "keywords": [
+    "mcp",
+    "mcp-apps",
+    "mcp-server",
+    "module-federation",
+    "micro-frontend",
+    "remote-components",
+    "dynamic-import"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/module-federation/mcp-apps.git"
+  },
+  "homepage": "https://github.com/module-federation/mcp-apps#readme",
+  "bugs": {
+    "url": "https://github.com/module-federation/mcp-apps/issues"
+  },
+  "main": "dist/server.js",
+  "types": "dist/server.d.ts",
+  "bin": {
+    "mf-mcp-server": "dist/index.js"
+  },
+  "files": [
+    "dist",
+    "skill",
+    "mcp_apps.schema.json",
+    "mcp_apps.example.json",
+    "README.md",
+    "LICENSE"
+  ],
+  "exports": {
+    ".": {
+      "types": "./dist/server.d.ts",
+      "default": "./dist/server.js"
+    },
+    "./renderer": {
+      "types": "./dist/renderer.d.ts",
+      "default": "./dist/renderer.js"
+    },
+    "./types": {
+      "types": "./dist/types.d.ts",
+      "default": "./dist/types.js"
+    },
+    "./react": {
+      "types": "./dist/react/index.d.ts",
+      "default": "./dist/react/index.js"
+    }
+  },
+  "typesVersions": {
+    "*": {
+      "renderer": [
+        "./dist/renderer.d.ts"
+      ],
+      "react": [
+        "./dist/react/index.d.ts"
+      ],
+      "types": [
+        "./dist/types.d.ts"
+      ]
+    }
+  },
+  "peerDependencies": {
+    "react": "^17.0.0 || ^18.0.0 || ^19.0.0",
+    "react-dom": "^17.0.0 || ^18.0.0 || ^19.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    },
+    "react-dom": {
+      "optional": true
+    }
+  },
+  "dependencies": {
+    "@module-federation/enhanced": "^2.2.1",
+    "@modelcontextprotocol/ext-apps": "^1.1.2",
+    "@modelcontextprotocol/sdk": "^1.27.1",
+    "express": "^5.0.0",
+    "zod": "^4.0.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.0",
+    "@types/node": "^22.0.0",
+    "@types/react": "~18.3.1",
+    "@types/react-dom": "~18.3.1",
+    "@rsbuild/core": "^1.4.0",
+    "@rsbuild/plugin-react": "^1.4.0",
+    "@changesets/cli": "^2.27.0",
+    "react": "~18.3.1",
+    "react-dom": "~18.3.1",
+    "typescript": "^5.7.3"
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "rm -rf dist/ && pnpm run build:ui && tsc && chmod +x dist/index.js && mkdir -p dist/styles && cp src/styles/*.css dist/styles/",
+    "build:check": "tsc --noEmit && pnpm run build:ui && tsc && chmod +x dist/index.js",
+    "build:ui": "rsbuild build && rsbuild build --config rsbuild.shell.config.ts",
+    "watch:ui": "rsbuild build --watch",
+    "dev": "tsc --watch",
+    "start": "node dist/index.js --config examples/basic/mcp_apps.json",
+    "typecheck": "tsc --noEmit",
+    "changeset": "changeset",
+    "version:bump": "changeset version",
+    "release": "changeset publish"
+  }
+}

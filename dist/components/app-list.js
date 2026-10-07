@@ -1,0 +1,7 @@
+import { jsxs as _jsxs, jsx as _jsx } from "react/jsx-runtime";
+export function AppList({ apps, displayMode }) {
+    if (apps.length === 0) {
+        return null;
+    }
+    return (_jsxs("div", { className: "mf-apps-container", children: [_jsxs("h2", { className: "mf-apps-title", children: ["App List (", apps.length, ")"] }), _jsx("div", { className: `mf-apps-grid ${displayMode === 'fullscreen' ? 'fullscreen' : ''}`, children: apps.map((app, index) => (_jsxs("div", { className: "mf-app-card", children: [_jsx("h3", { className: "mf-app-name", children: app.name }), _jsx("div", { className: "mf-app-url", children: app.url }), app.exposedComponents && app.exposedComponents.length > 0 && (_jsxs("div", { className: "mf-app-components", children: [_jsxs("div", { className: "mf-app-components-title", children: ["Components (", app.exposedComponents.length, ")"] }), _jsx("div", { className: "mf-app-components-list", children: app.exposedComponents.map((comp, i) => (_jsx("span", { className: "mf-app-component-tag", children: comp }, i))) })] })), app.remotes && Object.keys(app.remotes).length > 0 && (_jsxs("div", { className: "mf-app-remotes", children: [_jsx("div", { className: "mf-app-remotes-title", children: "Remote Modules" }), _jsx("div", { className: "mf-app-remotes-list", children: Object.entries(app.remotes).map(([name, url]) => (_jsxs("div", { className: "mf-app-remote-item", children: [_jsx("span", { className: "mf-app-remote-name", children: name }), ": ", String(url)] }, name))) })] }))] }, index))) })] }));
+}
