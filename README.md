@@ -68,16 +68,16 @@ In short: MF provides the UI delivery infrastructure that MCP Apps needs, withou
 
 ## Requirements
 
-- **Node.js 22+**
+- **Node.js 20+**
 - Claude Desktop (or any MCP host that supports the MCP Apps spec)
 
 ## Compatibility
 
-| `@module-federation/mcp-apps` | MCP Apps spec (`@modelcontextprotocol/ext-apps`) | MCP SDK (`@modelcontextprotocol/sdk`) | Module Federation (`@module-federation/enhanced`) | Tested Claude Desktop |
+| `@module-federation/mcp-apps` | MCP Apps spec (`@modelcontextprotocol/ext-apps`) | MCP SDK (`@modelcontextprotocol/server`) | Module Federation (`@module-federation/enhanced`) | Tested Claude Desktop |
 |---|---|---|---|---|
-| `0.0.x` | `^1.1.2` | `^1.27.1` | `^2.0.1` | 0.9.x (macOS) |
+| `0.0.x` | `^2.0.3` | `^2.3.1` | `^2.2.1` | 0.9.x (macOS) |
 
-> The MCP Apps spec version this package implements is **1.1.x** (Streamable HTTP + `text/html;profile=mcp-app` resource MIME type).
+> This package implements **MCP Apps 2.x** on the MCP Core **2026-07-28** stack (Streamable HTTP + `text/html;profile=mcp-app` resource MIME type).
 > Hosts that do not support the MCP Apps spec still receive plain-text tool responses — the UI is simply not rendered.
 
 ## Renderer API (for MF module developers)

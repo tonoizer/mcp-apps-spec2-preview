@@ -71,9 +71,9 @@ export const McpAppRenderer = ({ uiResource, messageId, hostInfo = DEFAULT_HOST_
                 window.open(url, '_blank', 'noopener,noreferrer');
                 return Promise.resolve({});
             };
-            // ⚠️ Must set oninitialized BEFORE connect() — the initialized event
+            // Register before connect() — the initialized event
             // fires during connect() and would be missed if set afterward.
-            bridge.oninitialized = () => {
+            bridge.addEventListener('initialized', () => {
                 // Defer so the app's React effects (useApp) finish running and
                 // ontoolresult / ontoolinput handlers are registered before we send.
                 // queueMicrotask is not enough — React effects run after paint, so we
@@ -87,7 +87,7 @@ export const McpAppRenderer = ({ uiResource, messageId, hostInfo = DEFAULT_HOST_
                         bridge.sendToolResult(uiResource.callToolResult);
                     }
                 }, 0);
-            };
+            });
             if (cancelled)
                 return;
             await bridge.connect(new PostMessageTransport(iframe.contentWindow, iframe.contentWindow));

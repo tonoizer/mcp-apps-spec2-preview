@@ -1,5 +1,5 @@
 import { registerAppResource, registerAppTool, getUiCapability, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
-import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
+import { McpServer } from '@modelcontextprotocol/server';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { jsonSchemaToZod } from './utils/schema-converter.js';

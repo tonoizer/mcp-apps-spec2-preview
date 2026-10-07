@@ -80,10 +80,14 @@
   },
   "dependencies": {
     "@module-federation/enhanced": "^2.2.1",
-    "@modelcontextprotocol/ext-apps": "^1.1.2",
-    "@modelcontextprotocol/sdk": "^1.27.1",
+    "@modelcontextprotocol/client": "^2.3.1",
+    "@modelcontextprotocol/core": "^2.3.1",
+    "@modelcontextprotocol/express": "^2.0.2",
+    "@modelcontextprotocol/ext-apps": "^2.0.3",
+    "@modelcontextprotocol/node": "^2.1.1",
+    "@modelcontextprotocol/server": "^2.3.1",
     "express": "^5.0.0",
-    "zod": "^4.0.0",
+    "zod": "^4.2.0",
     "cors": "^2.8.5"
   },
   "devDependencies": {
@@ -98,6 +102,9 @@
     "react": "~18.3.1",
     "react-dom": "~18.3.1",
     "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=20"
   },
   "publishConfig": {
     "access": "public",

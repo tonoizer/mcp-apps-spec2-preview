@@ -4,11 +4,10 @@
  * Run with: npx @mcp-server/module-federation
  * Or: node dist/index.js [--stdio]
  */
-import { createMcpExpressApp } from "@modelcontextprotocol/sdk/server/express.js";
-import { McpServer } from "@modelcontextprotocol/sdk/server/mcp.js";
-import { StdioServerTransport } from "@modelcontextprotocol/sdk/server/stdio.js";
-import { StreamableHTTPServerTransport } from "@modelcontextprotocol/sdk/server/streamableHttp.js";
-import { InMemoryTransport } from "@modelcontextprotocol/sdk/inMemory.js";
+import { createMcpExpressApp } from "@modelcontextprotocol/express";
+import { toNodeHandler } from "@modelcontextprotocol/node";
+import { createMcpHandler, InMemoryTransport } from "@modelcontextprotocol/server";
+import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
 import cors from "cors";
 import fs from "node:fs/promises";
 import path from "node:path";
@@ -28,6 +27,13 @@ async function startStreamableHTTPServer(createServerFn) {
     const shellBaseUrl = process.env.MF_MCP_BASE_URL?.replace(/\/$/, '') ?? `http://localhost:${port}`;
     const app = createMcpExpressApp({ host: "0.0.0.0" });
     app.use(cors());
+    // MCP Core v2's handler owns the Streamable HTTP lifecycle. Its factory is
+    // invoked for every request, so HTTP serving is stateless by default (the
+    // v2 equivalent of sessionIdGenerator: undefined).
+    const mcpHandler = createMcpHandler(() => createServerFn(shellBaseUrl));
+    const handleMcp = toNodeHandler(mcpHandler, {
+        onerror: (error) => console.error("MCP error:", error),
+    });
     // Serve built JS/CSS assets from dist/static/ at /static so the iframe
     // (shell HTML mode) can load them via absolute URLs like
     // http://localhost:{port}/static/js/mcp-app-shell.js
@@ -66,72 +72,41 @@ async function startStreamableHTTPServer(createServerFn) {
             res.status(404).send("mcp-app.html not found — run pnpm build:ui");
         }
     });
-    // Standard Streamable HTTP endpoint (SSE response) — for Claude Desktop / standard MCP clients
-    app.all("/mcp", async (req, res) => {
-        const server = await createServerFn(shellBaseUrl);
-        const transport = new StreamableHTTPServerTransport({
-            sessionIdGenerator: undefined,
-        });
-        res.on("close", () => {
-            transport.close().catch(() => { });
-            server.close().catch(() => { });
-        });
-        try {
-            await server.connect(transport);
-            await transport.handleRequest(req, res, req.body);
-        }
-        catch (error) {
-            console.error("MCP error:", error);
-            if (!res.headersSent) {
-                res.status(500).json({
-                    jsonrpc: "2.0",
-                    error: { code: -32603, message: "Internal server error" },
-                    id: null,
-                });
-            }
-        }
+    // Standard stateless Streamable HTTP endpoint for MCP clients.
+    app.all("/mcp", (req, res) => {
+        void handleMcp(req, res, req.body);
     });
     // Plain JSON-RPC endpoint — for MCP clients that call response.json() directly
     // instead of handling the standard SSE/Streamable HTTP response.
     // The client sends standard JSON-RPC (tools/list, tools/call, resources/read, resources/list)
     // and expects a plain JSON response like { jsonrpc, id, result }
     app.post("/mcp-rpc", async (req, res) => {
+        let server;
         try {
-            const server = await createServerFn(shellBaseUrl);
+            server = await createServerFn(shellBaseUrl);
             const requestBody = req.body;
-            // JSON-RPC notifications have no `id`. The MCP server processes them but
-            // never sends a response, so we must NOT wait for `onmessage` — doing so
-            // would block forever and the FaaS gateway would return 504.
-            // Detect notifications: has `method` but no `id` (or id is null/undefined).
             const isNotification = typeof requestBody?.method === "string" &&
                 (requestBody.id === undefined || requestBody.id === null);
-            // We need the server's registered handlers. Use InMemoryTransport to proxy the request.
             const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair();
             await server.connect(serverTransport);
             if (isNotification) {
-                // Notifications don't get a response — send and return 202 Accepted immediately.
                 await clientTransport.send(requestBody);
-                await server.close();
                 res.status(202).send();
                 return;
             }
-            // Send the request through the in-memory transport and collect the response.
-            // Set up onmessage BEFORE send to avoid missing a synchronous response.
             const responsePromise = new Promise((resolve, reject) => {
                 const timer = setTimeout(() => reject(new Error("MCP request timed out")), 30000);
-                clientTransport.onmessage = (msg) => {
+                clientTransport.onmessage = (message) => {
                     clearTimeout(timer);
-                    resolve(msg);
+                    resolve(message);
                 };
-                clientTransport.onerror = (err) => {
+                clientTransport.onerror = (error) => {
                     clearTimeout(timer);
-                    reject(err);
+                    reject(error);
                 };
             });
             await clientTransport.send(requestBody);
-            const response = await responsePromise;
-            await server.close();
-            res.json(response);
+            res.json(await responsePromise);
         }
         catch (error) {
             console.error("[MF MCP] /mcp-rpc error:", error);
@@ -143,6 +118,9 @@ async function startStreamableHTTPServer(createServerFn) {
                 });
             }
         }
+        finally {
+            await server?.close().catch(() => { });
+        }
     });
     const httpServer = app.listen(port, (err) => {
         if (err) {
@@ -152,12 +130,13 @@ async function startStreamableHTTPServer(createServerFn) {
         console.error(`[MF MCP] HTTP server listening on http://localhost:${port}/mcp`);
         console.error(`[MF MCP] Plain JSON endpoint: http://localhost:${port}/mcp-rpc`);
     });
-    const shutdown = () => {
+    const shutdown = async () => {
         console.error("\n[MF MCP] Shutting down...");
+        await mcpHandler.close();
         httpServer.close(() => process.exit(0));
     };
-    process.on("SIGINT", shutdown);
-    process.on("SIGTERM", shutdown);
+    process.on("SIGINT", () => void shutdown());
+    process.on("SIGTERM", () => void shutdown());
 }
 /**
  * Starts an MCP server with stdio transport.
