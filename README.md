@@ -77,7 +77,7 @@ In short: MF provides the UI delivery infrastructure that MCP Apps needs, withou
 |---|---|---|---|---|
 | `0.0.x` | `^2.0.3` | `^2.3.1` | `^2.2.1` | 0.9.x (macOS) |
 
-> This package implements **MCP Apps 2.x** on the MCP Core **2026-07-28** stack (Streamable HTTP + `text/html;profile=mcp-app` resource MIME type).
+> This package implements **MCP Apps 2.x** (`@modelcontextprotocol/ext-apps` ^2.0.3) on the MCP Core **2.x** SDK (`@modelcontextprotocol/{server,client,core}` ^2.3.1). Default protocol negotiation is the legacy 2025 handshake (latest `2025-11-25`); the modern **2026-07-28** wire revision is available via client `versionNegotiation` when the host opts in. Resource MIME type remains `text/html;profile=mcp-app` (Streamable HTTP + stdio).
 > Hosts that do not support the MCP Apps spec still receive plain-text tool responses — the UI is simply not rendered.
 
 ## Renderer API (for MF module developers)
