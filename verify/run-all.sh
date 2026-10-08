@@ -9,4 +9,5 @@ node 04-api-surface.mjs
 node 05-react.mjs
 ./06-typescript.sh
 node 07-demo.mjs
+node 08-inspector.mjs
 echo "ALL CHECKS PASS (node $(node -v))"
