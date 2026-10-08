@@ -8,4 +8,5 @@ node 03-roundtrip.mjs
 node 04-api-surface.mjs
 node 05-react.mjs
 ./06-typescript.sh
+node 07-demo.mjs
 echo "ALL CHECKS PASS (node $(node -v))"

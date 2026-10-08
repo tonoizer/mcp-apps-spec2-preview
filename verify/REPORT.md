@@ -23,6 +23,7 @@ export PATH=/workspace/node-v24.10.0-linux-x64/bin:$PATH   # or any Node >=20
 | 4 | API surface vs npm 0.0.6 | **PASS** | Runtime exports identical for every entry. CLI flags identical (`--config`, `--dev`, `--stdio`). Behavioral metadata (uri, visibility, mime, CSP, prefersBorder, htmlLen) identical on stdio. Expected SDK-surface deltas only: tools/list `$schema` draft-07→2020-12; old listed `execution.taskSupport=forbidden` (sdk 1.x), new does not. |
 | 5 | React renderer | **PASS** | Import OK; AppBridge 2.0.3 has `addEventListener('initialized')`, `sendToolInput/Result`, `connect`, `PostMessageTransport`, size/message/openlink setters. jsdom mounts iframe + missing-HTML fallback. Host/view handshake works with App **1.7.5** (what the prebuilt `dist/mcp-app.html` was built against) **and** App **2.0.3**. |
 | 6 | TypeScript consumer | **PASS** | `tsc --noEmit` strict NodeNext + Bundler (`skipLibCheck:false`) on `verify/ts/consumer.tsx` importing every public entry. No leftover `@modelcontextprotocol/sdk` imports in `dist/`. `server.server.oninitialized` property assignment still works on server 2.3.1 (observed UI-capability log). |
+| 7 | `examples/demo` smoke | **PASS** | `npm run demo:build`. HTTP: `/mcp` roundtrip (`show_greeting` → `ui://mf/demo-remote`, moduleFederation points at the served `remoteEntry.js`), remote + host assets served. stdio roundtrip. Headless Chrome (Node ≥22 + Chrome; skipped otherwise): the MF remote renders inside the MCP App iframe and the `ui/message` reaches the host. |
 
 ## Fixes applied during verification
 
@@ -40,6 +41,10 @@ No functional bugs found in the upgrade itself. No production code changes beyon
 - HTTP Streamable path is stateless (a fresh `McpServer` per request), so the `notifications/initialized` request lands on a server instance that never saw `initialize` and logs `Host UI capability: not supported`. Same on 0.0.6; log-only — tools/resources and `_meta.ui` are served unconditionally. stdio + InMemory report `supported`.
 - `npm audit` reports transitive high/moderate vulns in the lockfile (not introduced specifically by the MCP 2.x bump; not exercised by these checks).
 - Codex CLI verification run was attempted (`gpt-5.6-sol`, medium) but hit a usage limit (“try again at 5:56 PM”); this report is from an independent run of the same checks.
+
+## Demo (added after initial verification)
+
+`examples/demo/` + `npm run demo` / `demo:stdio` / `demo:screenshot`. Screenshot: `examples/demo/screenshot.png`. Covered by check 7.
 
 ## Last suite output
 
