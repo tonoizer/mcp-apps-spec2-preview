@@ -100,6 +100,16 @@ await client.close();
 }
 const newMeta = await meta(newDir, 'v2');
 const oldMeta = await meta(oldDir, 'v1');
-assert.deepEqual(newMeta, oldMeta, 'behavioral metadata diverged from 0.0.6');
+// The embedded MCP App HTML is intentionally rebuilt (ext-apps 2.x), so only its size differs.
+const { htmlLen: newHtml, ...newRest } = newMeta;
+const { htmlLen: oldHtml, ...oldRest } = oldMeta;
+assert.deepEqual(newRest, oldRest, 'behavioral metadata diverged from 0.0.6');
+assert.ok(newHtml > 100_000 && oldHtml > 100_000);
 
-console.log('CHECK4 PASS', { surface, cliFlags: [...new Set(cliFlags(newDir))], meta: newMeta });
+// Additive entry (not in 0.0.6): ./transports
+const additive = exportKeys(newDir, '@module-federation/mcp-apps/transports');
+assert.deepEqual(additive, ['createStreamableHttpHandler', 'serveStdioServer']);
+const oldHas = run(process.execPath, ['--input-type=module', '-e', `import('@module-federation/mcp-apps/transports').then(()=>console.log('yes'),()=>console.log('no'))`], { cwd: oldDir }).stdout.trim();
+assert.equal(oldHas, 'no');
+
+console.log('CHECK4 PASS', { surface, additive: { './transports': additive }, cliFlags: [...new Set(cliFlags(newDir))], meta: newRest, htmlLen: { new: newHtml, old: oldHtml } });

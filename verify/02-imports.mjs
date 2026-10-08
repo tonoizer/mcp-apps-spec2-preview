@@ -13,13 +13,16 @@ async function keysOf(spec) {
 }
 
 const pkg = JSON.parse(require('fs').readFileSync(path.join(root, 'package.json'), 'utf8'));
-assert.deepEqual(Object.keys(pkg.exports).sort(), ['.', './react', './renderer', './types']);
+assert.deepEqual(Object.keys(pkg.exports).sort(), ['.', './react', './renderer', './transports', './types']);
 
 const main = await keysOf(pathToFileURL(path.join(root, 'dist/server.js')).href);
 assert.deepEqual(main, ['createServer']);
 
 const types = await keysOf(pathToFileURL(path.join(root, 'dist/types.js')).href);
 assert.deepEqual(types, []);
+
+const transports = await keysOf(pathToFileURL(path.join(root, 'dist/transports.js')).href);
+assert.deepEqual(transports, ['createStreamableHttpHandler', 'serveStdioServer']);
 
 const react = await keysOf(pathToFileURL(path.join(root, 'dist/react/index.js')).href);
 assert.deepEqual(react, ['McpAppRenderer']);
@@ -35,4 +38,4 @@ assert.deepEqual(JSON.parse(r.stdout.trim()), ['MFContext','MFProvider','RemoteC
 for (const dep of ['@modelcontextprotocol/express','@modelcontextprotocol/node','@modelcontextprotocol/server','@modelcontextprotocol/server/stdio','cors','express']) {
   await import(dep);
 }
-console.log('CHECK2 PASS', { main, react, renderer: JSON.parse(r.stdout.trim()) });
+console.log('CHECK2 PASS', { main, transports, react, renderer: JSON.parse(r.stdout.trim()) });

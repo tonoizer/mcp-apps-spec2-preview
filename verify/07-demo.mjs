@@ -62,14 +62,18 @@ try {
 
   const chrome = process.env.CHROME ?? 'google-chrome';
   const haveChrome = spawnSync(chrome, ['--version'], { encoding: 'utf8' }).status === 0;
-  if (process.env.SKIP_BROWSER === '1' || !haveChrome || typeof WebSocket === 'undefined') { // screenshot.mjs needs Node >= 22
+  // screenshot.mjs talks CDP over the global WebSocket (built in on Node >= 22; on
+  // Node 20.10+ it re-runs itself with --experimental-websocket).
+  if (process.env.SKIP_BROWSER === '1' || !haveChrome) {
     results.browser = 'skipped';
   } else {
     const out = path.join(fs.mkdtempSync(path.join(os.tmpdir(), 'demo-shot-')), 'shot.png');
     const shot = spawnSync(process.execPath, [path.join(demo, 'screenshot.mjs')], { env: { ...process.env, DEMO_URL: `${base}/`, OUT: out }, encoding: 'utf8', timeout: 90000 });
     assert.equal(shot.status, 0, shot.stdout + shot.stderr);
     assert.ok(fs.statSync(out).size > 10_000);
-    results.browser = 'rendered (Hello, Demo + ui/message relayed)';
+    // The browser host negotiates with versionNegotiation 'auto' → must land on 2026-07-28.
+    assert.match(shot.stdout, /MCP 2026-07-28/, 'demo host should negotiate MCP 2026-07-28');
+    results.browser = 'rendered (Hello, Demo + ui/message relayed; browser client on MCP 2026-07-28)';
   }
 } finally {
   child.kill('SIGTERM');
