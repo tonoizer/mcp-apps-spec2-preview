@@ -1,3 +1,12 @@
+> [!IMPORTANT]
+> **Unofficial preview. Not affiliated with, endorsed by, or maintained by the Module Federation team.**
+>
+> The upstream source repository [`module-federation/mcp-apps`](https://github.com/module-federation/mcp-apps) is not public. So this repo's **`main` branch is a verbatim snapshot of the published npm package [`@module-federation/mcp-apps@0.0.6`](https://www.npmjs.com/package/@module-federation/mcp-apps/v/0.0.6)**: the build output (`dist/`), docs and skills exactly as shipped, plus this notice and a `LICENSE` (the package declares MIT).
+>
+> The upgrade to **MCP Apps (`@modelcontextprotocol/ext-apps`) 2.0 + MCP SDK 2.x** is on the branch [`codex/mcp-apps-spec-upgrade`](https://github.com/tonoizer/mcp-apps-spec2-preview/tree/codex/mcp-apps-spec-upgrade). It edits the `dist/` output directly and adds a demo and a verification harness. See the full diff here: [compare `main...codex/mcp-apps-spec-upgrade`](https://github.com/tonoizer/mcp-apps-spec2-preview/compare/main...codex/mcp-apps-spec-upgrade).
+>
+> It is meant to be ported into the real upstream `src/` via a PR to `module-federation/mcp-apps`. For production use, install the official package from npm.
+
 # Module Federation MCP Apps
 
 Bridge your existing Module Federation remotes to AI-native interactive UIs via the MCP Apps standard.
