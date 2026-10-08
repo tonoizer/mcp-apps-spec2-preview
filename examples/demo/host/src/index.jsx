@@ -12,7 +12,7 @@ function App() {
   const [status, setStatus] = useState('connecting…');
   const [server, setServer] = useState(null);
   const [tools, setTools] = useState([]);
-  const [name, setName] = useState('Kevin');
+  const [name, setName] = useState('Demo');
   const [call, setCall] = useState(null); // { id, result, html, resourceUri, mimeType }
   const [messages, setMessages] = useState([]);
   const [error, setError] = useState(null);
@@ -47,7 +47,7 @@ function App() {
         setStatus('connected');
         const { tools } = await client.listTools();
         setTools(tools);
-        if (tools[0]) await callTool(tools[0], { name: 'Kevin' });
+        if (tools[0]) await callTool(tools[0], { name: 'Demo' });
       } catch (e) {
         setStatus('error');
         setError(String(e?.message ?? e));

@@ -12,7 +12,7 @@ export default function Greeting({ name = 'world', mcpApp }) {
   const sendToHost = async () => {
     await mcpApp?.sendMessage?.({
       role: 'user',
-      content: [{ type: 'text', text: `Hello from ${name}'s MCP App (clicked ${count}x)` }],
+      content: [{ type: 'text', text: `Hello from the MCP Apps demo (greeting: ${name}, clicked ${count}x)` }],
     });
     setSent(true);
   };

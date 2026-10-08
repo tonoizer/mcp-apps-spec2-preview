@@ -26,7 +26,7 @@ async function exercise(client, port) {
   const { tools } = await client.listTools();
   assert.deepEqual(tools.map((t) => t.name), ['show_greeting']);
   assert.equal(tools[0]._meta.ui.resourceUri, 'ui://mf/demo-remote');
-  const call = await client.callTool({ name: 'show_greeting', arguments: { name: 'Kevin' } });
+  const call = await client.callTool({ name: 'show_greeting', arguments: { name: 'Demo' } });
   const mf = call.structuredContent.resource.moduleFederation;
   assert.equal(mf.remoteName, 'demo_remote');
   assert.equal(mf.module, './Greeting');
@@ -69,7 +69,7 @@ try {
     const shot = spawnSync(process.execPath, [path.join(demo, 'screenshot.mjs')], { env: { ...process.env, DEMO_URL: `${base}/`, OUT: out }, encoding: 'utf8', timeout: 90000 });
     assert.equal(shot.status, 0, shot.stdout + shot.stderr);
     assert.ok(fs.statSync(out).size > 10_000);
-    results.browser = 'rendered (Hello, Kevin + ui/message relayed)';
+    results.browser = 'rendered (Hello, Demo + ui/message relayed)';
   }
 } finally {
   child.kill('SIGTERM');

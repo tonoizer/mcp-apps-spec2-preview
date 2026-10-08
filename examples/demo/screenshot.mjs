@@ -58,14 +58,14 @@ try {
   await send('Page.navigate', { url });
   const frameText = `(() => { const f = document.querySelector('iframe'); return f?.contentDocument?.body?.innerText ?? ''; })()`;
   await waitFor(`document.body.innerText.includes('show_greeting')`, 'tools/list in host');
-  await waitFor(`${frameText}.includes('Hello, Kevin')`, 'MF remote rendered inside MCP App iframe');
+  await waitFor(`${frameText}.includes('Hello, Demo')`, 'MF remote rendered inside MCP App iframe');
   // Interact: click counter twice + send ui/message to host.
   const click = (match) => evaluate(`(() => { const d = document.querySelector('iframe').contentDocument; [...d.querySelectorAll('button')].find(x => x.textContent.includes(${JSON.stringify(match)})).click(); return true; })()`);
   await click('Clicked'); await sleep(150);
   await click('Clicked'); await sleep(150);
   await waitFor(`${frameText}.includes('Clicked 2×')`, 'remote component state update (shared React)');
   await click('Send message');
-  await waitFor(`document.body.innerText.includes("Hello from Kevin's MCP App (clicked 2x)")`, 'ui/message relayed to host');
+  await waitFor(`document.body.innerText.includes("Hello from the MCP Apps demo (greeting: Demo, clicked 2x)")`, 'ui/message relayed to host');
   await sleep(300);
   const { cssContentSize } = await send('Page.getLayoutMetrics');
   const shot = await send('Page.captureScreenshot', { format: 'png', captureBeyondViewport: true,
