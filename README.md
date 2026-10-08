@@ -152,6 +152,21 @@ export function App({ mcpApp }: { mcpApp?: any }) {
 }
 ```
 
+## Demo (MCP Apps 2.x end-to-end)
+
+`examples/demo/` is a self-contained demo: an MCP server built on `createServer()`, one tool (`show_greeting`) with a `ui://mf/demo-remote` MCP App resource, a real Module Federation remote, and a small React host that uses `McpAppRenderer` to call the tool and render the app.
+
+```bash
+npm ci
+npm run demo            # http://localhost:4173/  (Streamable HTTP MCP endpoint: /mcp)
+npm run demo:stdio      # same server over stdio
+npm run demo:screenshot # headless Chrome check + examples/demo/screenshot.png
+```
+
+![MCP Apps demo](./examples/demo/screenshot.png)
+
+See [examples/demo/README.md](./examples/demo/README.md) for details.
+
 ## Try the Demo
 
 The repo includes a ready-to-run Module Federation provider with a **Deploy Wizard** demo.

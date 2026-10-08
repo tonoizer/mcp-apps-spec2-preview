@@ -120,6 +120,11 @@
     "typecheck": "tsc --noEmit",
     "changeset": "changeset",
     "version:bump": "changeset version",
-    "release": "changeset publish"
+    "release": "changeset publish",
+    "demo:build": "rsbuild build -c examples/demo/rsbuild.remote.config.mjs && rsbuild build -c examples/demo/rsbuild.host.config.mjs",
+    "demo": "npm run demo:build && node examples/demo/server.mjs",
+    "demo:stdio": "node examples/demo/server.mjs --stdio",
+    "demo:screenshot": "node examples/demo/screenshot.mjs",
+    "verify": "bash verify/run-all.sh"
   }
 }

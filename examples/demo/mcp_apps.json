@@ -1,0 +1,30 @@
+{
+  "$schema": "../../mcp_apps.schema.json",
+  "remotes": [
+    {
+      "name": "demo_remote",
+      "baseUrl": "http://localhost:4173/remote/remoteEntry.js",
+      "csp": {
+        "connectDomains": ["http://localhost:4173"],
+        "resourceDomains": ["http://localhost:4173"]
+      }
+    }
+  ],
+  "tools": [
+    {
+      "name": "show_greeting",
+      "title": "Show greeting card",
+      "description": "Renders an interactive greeting card (Module Federation remote demo_remote/Greeting) for the given name.",
+      "inputSchema": {
+        "type": "object",
+        "properties": {
+          "name": { "type": "string", "description": "Who to greet" }
+        },
+        "required": ["name"]
+      },
+      "remote": "demo_remote",
+      "module": "./Greeting",
+      "exportName": "default"
+    }
+  ]
+}
