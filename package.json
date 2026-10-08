@@ -1,6 +1,6 @@
 {
   "name": "@module-federation/mcp-apps",
-  "version": "0.0.6",
+  "version": "0.1.0-preview",
   "type": "module",
   "description": "MCP Apps Server for rendering Module Federation components as interactive UIs in AI Agents",
   "license": "MIT",
@@ -51,6 +51,10 @@
     "./react": {
       "types": "./dist/react/index.d.ts",
       "default": "./dist/react/index.js"
+    },
+    "./transports": {
+      "types": "./dist/transports.d.ts",
+      "default": "./dist/transports.js"
     }
   },
   "typesVersions": {
@@ -111,10 +115,9 @@
     "provenance": true
   },
   "scripts": {
-    "build": "rm -rf dist/ && pnpm run build:ui && tsc && chmod +x dist/index.js && mkdir -p dist/styles && cp src/styles/*.css dist/styles/",
-    "build:check": "tsc --noEmit && pnpm run build:ui && tsc && chmod +x dist/index.js",
-    "build:ui": "rsbuild build && rsbuild build --config rsbuild.shell.config.ts",
-    "watch:ui": "rsbuild build --watch",
+    "build": "rm -rf dist/ && npm run build:ui && tsc && chmod +x dist/index.js && mkdir -p dist/styles && cp src/styles/*.css dist/styles/",
+    "build:check": "tsc --noEmit && npm run build:ui && tsc && chmod +x dist/index.js",
+    "build:ui": "node ui/build.mjs",
     "dev": "tsc --watch",
     "start": "node dist/index.js --config examples/basic/mcp_apps.json",
     "typecheck": "tsc --noEmit",

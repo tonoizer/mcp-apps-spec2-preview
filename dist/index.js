@@ -5,13 +5,13 @@
  * Or: node dist/index.js [--stdio]
  */
 import { createMcpExpressApp } from "@modelcontextprotocol/express";
-import { toNodeHandler } from "@modelcontextprotocol/node";
-import { createMcpHandler, InMemoryTransport } from "@modelcontextprotocol/server";
-import { StdioServerTransport } from "@modelcontextprotocol/server/stdio";
+import { toNodeHandler, toWebRequest } from "@modelcontextprotocol/node";
+import { createMcpHandler, InMemoryTransport, isLegacyRequest } from "@modelcontextprotocol/server";
 import cors from "cors";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { createServer } from "./server.js";
+import { createStreamableHttpHandler, serveStdioServer } from "./transports.js";
 /**
  * Starts an MCP server with Streamable HTTP transport.
  *
@@ -27,13 +27,19 @@ async function startStreamableHTTPServer(createServerFn) {
     const shellBaseUrl = process.env.MF_MCP_BASE_URL?.replace(/\/$/, '') ?? `http://localhost:${port}`;
     const app = createMcpExpressApp({ host: "0.0.0.0" });
     app.use(cors());
-    // MCP Core v2's handler owns the Streamable HTTP lifecycle. Its factory is
-    // invoked for every request, so HTTP serving is stateless by default (the
-    // v2 equivalent of sessionIdGenerator: undefined).
-    const mcpHandler = createMcpHandler(() => createServerFn(shellBaseUrl));
-    const handleMcp = toNodeHandler(mcpHandler, {
-        onerror: (error) => console.error("MCP error:", error),
+    // One endpoint, both protocol eras:
+    //  - 2026-07-28 (server/discover + per-request _meta envelope) → SDK createMcpHandler
+    //  - 2025-11-25 and older (initialize handshake) → sessionful Streamable HTTP,
+    //    with the SDK's stateless fallback for session-less JSON-RPC callers.
+    const onerror = (error) => console.error("[MF MCP] MCP error:", error);
+    const mcpHandler = createStreamableHttpHandler(() => createServerFn(shellBaseUrl), { onerror });
+    // /mcp-rpc answers 2026-07-28 requests with plain JSON as well.
+    const rpcModernHandler = createMcpHandler(() => createServerFn(shellBaseUrl), {
+        legacy: "reject",
+        responseMode: "json",
+        onerror,
     });
+    const handleRpcModern = toNodeHandler(rpcModernHandler, { onerror });
     // Serve built JS/CSS assets from dist/static/ at /static so the iframe
     // (shell HTML mode) can load them via absolute URLs like
     // http://localhost:{port}/static/js/mcp-app-shell.js
@@ -58,7 +64,7 @@ async function startStreamableHTTPServer(createServerFn) {
             res.type("html").send(html);
         }
         catch {
-            res.status(404).send("mcp-app-shell.html not found — run pnpm build:ui");
+            res.status(404).send("mcp-app-shell.html not found — run npm run build:ui");
         }
     });
     // Also serve dist/mcp-app.html at /static/mcp-app.html for backwards compat
@@ -69,12 +75,12 @@ async function startStreamableHTTPServer(createServerFn) {
             res.type("html").send(html);
         }
         catch {
-            res.status(404).send("mcp-app.html not found — run pnpm build:ui");
+            res.status(404).send("mcp-app.html not found — run npm run build:ui");
         }
     });
-    // Standard stateless Streamable HTTP endpoint for MCP clients.
+    // Standard Streamable HTTP endpoint for MCP clients (both protocol eras).
     app.all("/mcp", (req, res) => {
-        void handleMcp(req, res, req.body);
+        void mcpHandler.handle(req, res, req.body);
     });
     // Plain JSON-RPC endpoint — for MCP clients that call response.json() directly
     // instead of handling the standard SSE/Streamable HTTP response.
@@ -83,6 +89,11 @@ async function startStreamableHTTPServer(createServerFn) {
     app.post("/mcp-rpc", async (req, res) => {
         let server;
         try {
+            // 2026-07-28 requests (per-request _meta envelope) → SDK handler in JSON mode.
+            if (!(await isLegacyRequest(await toWebRequest(req, req.body), req.body))) {
+                await handleRpcModern(req, res, req.body);
+                return;
+            }
             server = await createServerFn(shellBaseUrl);
             const requestBody = req.body;
             const isNotification = typeof requestBody?.method === "string" &&
@@ -132,7 +143,7 @@ async function startStreamableHTTPServer(createServerFn) {
     });
     const shutdown = async () => {
         console.error("\n[MF MCP] Shutting down...");
-        await mcpHandler.close();
+        await Promise.allSettled([mcpHandler.close(), rpcModernHandler.close()]);
         httpServer.close(() => process.exit(0));
     };
     process.on("SIGINT", () => void shutdown());
@@ -146,9 +157,10 @@ async function startStreamableHTTPServer(createServerFn) {
 async function startStdioServer(createServerFn) {
     // In stdio mode there is no HTTP server, so no shellBaseUrl — the full
     // self-contained mcp-app.html is served inline.
-    const server = await createServerFn(undefined);
-    await server.connect(new StdioServerTransport());
-    console.error('[MF MCP] Server started via stdio');
+    // serveStdio picks the era from the opening exchange: server/discover pins
+    // 2026-07-28, an initialize handshake pins 2025-11-25 (or older).
+    serveStdioServer(() => createServerFn(undefined));
+    console.error('[MF MCP] Server started via stdio (MCP 2026-07-28 + 2025-11-25)');
 }
 async function main() {
     // Parse command line arguments

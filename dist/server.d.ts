@@ -11,7 +11,7 @@ export interface CreateServerOptions {
      * HTTP server base URL (e.g. `http://localhost:3001`).
      * When set, `resources/read` returns the tiny `mcp-app-shell.html` (~1 KB)
      * that loads JS/CSS from `{shellBaseUrl}/static/...` instead of the full
-     * self-contained 686 KB inline HTML.
+     * self-contained ~515 KB inline HTML (`dist/mcp-app.html`).
      * Leave undefined in stdio mode (no HTTP server available).
      */
     shellBaseUrl?: string;

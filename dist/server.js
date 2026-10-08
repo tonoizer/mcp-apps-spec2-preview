@@ -1,5 +1,6 @@
 import { registerAppResource, registerAppTool, getUiCapability, RESOURCE_MIME_TYPE } from '@modelcontextprotocol/ext-apps/server';
-import { McpServer } from '@modelcontextprotocol/server';
+import { CLIENT_CAPABILITIES_META_KEY, McpServer } from '@modelcontextprotocol/server';
+import { createRequire } from 'node:module';
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { jsonSchemaToZod } from './utils/schema-converter.js';
@@ -8,6 +9,32 @@ import { validateConfig } from './utils/config-validator.js';
 const DIST_DIR = import.meta.filename.endsWith(".ts")
     ? path.join(import.meta.dirname, "..", "dist")
     : import.meta.dirname;
+// Reported as serverInfo.version (falls back if package.json is not resolvable).
+const PACKAGE_VERSION = (() => {
+    try {
+        return createRequire(import.meta.url)('../package.json').version ?? '0.0.0';
+    }
+    catch {
+        return '0.0.0';
+    }
+})();
+/**
+ * Resolve the client capabilities that apply to *this* request:
+ * - 2026-07-28: the per-request `_meta` envelope (`io.modelcontextprotocol/clientCapabilities`);
+ * - 2025-era: what the client declared in `initialize` (stdio / sessionful HTTP).
+ * Returns `undefined` when the request carries no capability information at all
+ * (stateless legacy callers that never initialized this instance).
+ */
+function resolveClientCapabilities(server, ctx) {
+    return ctx?.mcpReq?.envelope?.[CLIENT_CAPABILITIES_META_KEY] ?? server.server.getClientCapabilities();
+}
+function describeUiCapability(clientCaps) {
+    if (clientCaps === undefined)
+        return 'unknown (no client capabilities on this request)';
+    return getUiCapability(clientCaps)
+        ? 'supported'
+        : 'not supported (tools still work, UI will not render)';
+}
 // Cache mcp-app.html content to avoid reading from disk on every resources/read request.
 // In dev mode (--dev flag or NODE_ENV=development) caching is disabled so that
 // rebuilding the UI is visible immediately without restarting the MCP server.
@@ -33,7 +60,7 @@ async function getMcpAppHtml(devMode, shellBaseUrl) {
                 return shell;
             }
             catch {
-                console.error('[MF MCP] ⚠️  mcp-app-shell.html not found, falling back to full mcp-app.html. Run `pnpm build:ui` to generate the shell.');
+                console.error('[MF MCP] ⚠️  mcp-app-shell.html not found, falling back to full mcp-app.html. Run `npm run build:ui` to generate the shell.');
                 // fall through to full HTML
             }
         }
@@ -93,7 +120,7 @@ export async function createServer({ configPath, devMode = false, shellBaseUrl }
     const config = await loadConfig(configPath);
     const server = new McpServer({
         name: 'module-federation',
-        version: '1.0.0',
+        version: PACKAGE_VERSION,
     });
     console.error(`[MF MCP] Loaded ${config.tools.length} tools from config`);
     // Pre-build a map of remote name → resource URI for O(1) lookup.
@@ -105,9 +132,9 @@ export async function createServer({ configPath, devMode = false, shellBaseUrl }
         remoteResourceUriMap.set(remoteConfig.name, `ui://mf/${slug}`);
     }
     // Build tool handler — shared between UI and text-only registrations
-    const makeToolHandler = (toolConfig) => async (args) => {
+    const makeToolHandler = (toolConfig) => async (args, ctx) => {
         const typedArgs = (args ?? {});
-        console.error(`[MF MCP] ${toolConfig.name} called with:`, typedArgs);
+        console.error(`[MF MCP] ${toolConfig.name} called with:`, typedArgs, `— host UI capability: ${describeUiCapability(resolveClientCapabilities(server, ctx))}`);
         const remoteConfig = config.remotes.find((r) => r.name === toolConfig.remote);
         if (!remoteConfig) {
             return {
@@ -146,11 +173,12 @@ export async function createServer({ configPath, devMode = false, shellBaseUrl }
     //
     // Per the MCP Apps spec, hosts that don't support UI simply ignore _meta.ui,
     // so registering UI tools unconditionally is safe and backward-compatible.
-    // Log which mode the host is using for observability.
+    // Log which mode the host is using for observability. On 2025-era
+    // connections (stdio, sessionful HTTP) the capabilities come from
+    // `initialize`; on 2026-07-28 there is no handshake — capabilities travel
+    // with every request, so they are logged per tools/call instead.
     server.server.oninitialized = () => {
-        const clientCaps = server.server.getClientCapabilities();
-        const uiCap = getUiCapability(clientCaps);
-        console.error(`[MF MCP] Host UI capability: ${uiCap ? 'supported' : 'not supported (tools still work, UI will not render)'}`);
+        console.error(`[MF MCP] Host UI capability (initialize): ${describeUiCapability(server.server.getClientCapabilities())}`);
     };
     for (const toolConfig of config.tools) {
         const inputSchema = jsonSchemaToZod(toolConfig.inputSchema || {});

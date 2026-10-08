@@ -1,7 +1,9 @@
 #!/usr/bin/env node
 /**
- * MCP Apps demo server — uses only the package's public API (`createServer`)
- * plus the official MCP Core v2 server adapters.
+ * MCP Apps demo server — uses only the package's public API (`createServer`,
+ * `createStreamableHttpHandler`, `serveStdioServer`) on top of the official
+ * MCP SDK v2 adapters. Both transports speak MCP 2026-07-28 (server/discover)
+ * and 2025-11-25 (initialize) on the same endpoint.
  *
  *   node examples/demo/server.mjs          # Streamable HTTP on http://localhost:4173/mcp + demo host + MF remote
  *   node examples/demo/server.mjs --stdio  # MCP over stdio (MF remote still served on :4173 for the iframe)
@@ -13,10 +15,8 @@ import os from 'node:os';
 import path from 'node:path';
 import express from 'express';
 import { createServer } from '@module-federation/mcp-apps';
-import { createMcpHandler } from '@modelcontextprotocol/server';
-import { StdioServerTransport } from '@modelcontextprotocol/server/stdio';
+import { createStreamableHttpHandler, serveStdioServer } from '@module-federation/mcp-apps/transports';
 import { createMcpExpressApp } from '@modelcontextprotocol/express';
-import { toNodeHandler } from '@modelcontextprotocol/node';
 
 const here = import.meta.dirname;
 const port = Number(process.env.DEMO_PORT ?? 4173);
@@ -48,9 +48,8 @@ app.use('/', express.static(path.join(here, 'dist/host')));
 
 let mcpHandler;
 if (!stdio) {
-  mcpHandler = createMcpHandler(factory);
-  const handle = toNodeHandler(mcpHandler, { onerror: (e) => log('MCP error:', e) });
-  app.all('/mcp', (req, res) => void handle(req, res, req.body));
+  mcpHandler = createStreamableHttpHandler(factory, { onerror: (e) => log('MCP error:', e) });
+  app.all('/mcp', (req, res) => void mcpHandler.handle(req, res, req.body));
 }
 
 const httpServer = app.listen(port, () => {
@@ -61,14 +60,15 @@ const httpServer = app.listen(port, () => {
   }
 });
 
+let stdioHandle;
 if (stdio) {
-  const server = await factory();
-  await server.connect(new StdioServerTransport());
+  stdioHandle = serveStdioServer(factory, { onerror: (e) => log('MCP error:', e) });
   log('MCP (stdio): ready');
 }
 
 const shutdown = async () => {
   await mcpHandler?.close?.();
+  await stdioHandle?.close?.();
   httpServer.close(() => process.exit(0));
   setTimeout(() => process.exit(0), 1000).unref();
 };
