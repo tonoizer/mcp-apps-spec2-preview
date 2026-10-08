@@ -2,7 +2,7 @@
 # tsc --noEmit (strict, skipLibCheck=false) on a consumer of every public entry, NodeNext + Bundler.
 # Uses package self-reference (exports map) from the repo root.
 set -euo pipefail
-export PATH="${NODE24_BIN:-/workspace/node-v24.10.0-linux-x64/bin}:$PATH"
+if [[ -n "${NODE_BIN:-}" ]]; then export PATH="$NODE_BIN:$PATH"; fi  # optional: NODE_BIN=/path/to/node/bin to pick a Node (>=20)
 cd "$(dirname "$0")/ts"
 npx --no-install tsc -p tsconfig.nodenext.json
 npx --no-install tsc -p tsconfig.bundler.json

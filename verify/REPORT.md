@@ -1,15 +1,15 @@
 # Verification report — `codex/mcp-apps-spec-upgrade` @ `d3159bd` (+ follow-up)
 
 **Date:** 2026-10-08 (Europe/Berlin)  
-**Repo:** tonoizer/mcp-apps (seeded from npm `@module-federation/mcp-apps@0.0.6`; upstream `module-federation/mcp-apps` is private)  
-**Node:** 24.10.0 and 20.19.2 — full suite passes on both (`NODE24_BIN=/usr/bin ./verify/run-all.sh` for Node 20)  
+**Repo:** tonoizer/mcp-apps-spec2-preview (unofficial; seeded from npm `@module-federation/mcp-apps@0.0.6`; upstream `module-federation/mcp-apps` is private)  
+**Node:** 24.10.0 and 20.19.2 — full suite passes on both (`NODE_BIN=/path/to/node20/bin ./verify/run-all.sh`)  
 **Verdict:** **PASS** (functional upgrade verified; one README wording fix)
 
 ## How to re-run
 
 ```bash
-export PATH=/workspace/node-v24.10.0-linux-x64/bin:$PATH   # or any Node >=20
-./verify/run-all.sh
+./verify/run-all.sh                     # uses `node` on PATH (>=20)
+NODE_BIN=/path/to/node20/bin ./verify/run-all.sh   # pick a specific Node
 # skip reinstall: SKIP_INSTALL=1 ./verify/run-all.sh
 ```
 
@@ -40,7 +40,6 @@ No functional bugs found in the upgrade itself. No production code changes beyon
 - `./renderer` CSS imports fail under plain Node without a loader (pre-existing; identical on 0.0.6). Bundlers (Vite/Rsbuild/webpack) handle this.
 - HTTP Streamable path is stateless (a fresh `McpServer` per request), so the `notifications/initialized` request lands on a server instance that never saw `initialize` and logs `Host UI capability: not supported`. Same on 0.0.6; log-only — tools/resources and `_meta.ui` are served unconditionally. stdio + InMemory report `supported`.
 - `npm audit` reports transitive high/moderate vulns in the lockfile (not introduced specifically by the MCP 2.x bump; not exercised by these checks).
-- Codex CLI verification run was attempted (`gpt-5.6-sol`, medium) but hit a usage limit (“try again at 5:56 PM”); this report is from an independent run of the same checks.
 
 ## Demo (added after initial verification)
 

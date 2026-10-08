@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-export PATH="${NODE24_BIN:-/workspace/node-v24.10.0-linux-x64/bin}:$PATH"  # set NODE24_BIN=/usr/bin (or any node dir) to test another Node
+if [[ -n "${NODE_BIN:-}" ]]; then export PATH="$NODE_BIN:$PATH"; fi  # optional: NODE_BIN=/path/to/node/bin to pick a Node (>=20)
 cd "$(dirname "$0")"
 [[ "${SKIP_INSTALL:-}" == 1 ]] || ./01-install.sh
 node 02-imports.mjs

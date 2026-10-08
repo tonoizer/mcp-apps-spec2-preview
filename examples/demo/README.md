@@ -1,6 +1,6 @@
 # MCP Apps demo
 
-A small, self-contained end-to-end demo of `@module-federation/mcp-apps` on the MCP Apps 2.x / MCP Core 2.x stack.
+A small, self-contained end-to-end demo of the unofficial MCP Apps 2.x preview of `@module-federation/mcp-apps` on the MCP Apps 2.x / MCP Core 2.x stack.
 
 ![Demo screenshot](./screenshot.png)
 
@@ -15,6 +15,8 @@ A small, self-contained end-to-end demo of `@module-federation/mcp-apps` on the 
 ## Run
 
 ```bash
+git clone -b codex/mcp-apps-spec-upgrade https://github.com/tonoizer/mcp-apps-spec2-preview.git
+cd mcp-apps-spec2-preview
 npm ci
 npm run demo                # builds remote + host, then serves http://localhost:4173/
 # open http://localhost:4173/

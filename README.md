@@ -1,11 +1,9 @@
 > [!IMPORTANT]
 > **Unofficial preview. Not affiliated with, endorsed by, or maintained by the Module Federation team.**
 >
-> The upstream source repository [`module-federation/mcp-apps`](https://github.com/module-federation/mcp-apps) is not public. So this repo's **`main` branch is a verbatim snapshot of the published npm package [`@module-federation/mcp-apps@0.0.6`](https://www.npmjs.com/package/@module-federation/mcp-apps/v/0.0.6)**: the build output (`dist/`), docs and skills exactly as shipped, plus this notice and a `LICENSE` (the package declares MIT).
+> The upstream source repository [`module-federation/mcp-apps`](https://github.com/module-federation/mcp-apps) is not public. This repo's `main` branch is a verbatim snapshot of the published npm package [`@module-federation/mcp-apps@0.0.6`](https://www.npmjs.com/package/@module-federation/mcp-apps/v/0.0.6) (its `dist/` build output and docs). **This branch (`codex/mcp-apps-spec-upgrade`) edits that `dist/` output directly** to move to MCP Apps (`@modelcontextprotocol/ext-apps`) 2.0 + MCP SDK 2.x (`@modelcontextprotocol/{server,client,core}`). It also adds a demo (`examples/demo/`) and a verification harness (`verify/`).
 >
-> The upgrade to **MCP Apps (`@modelcontextprotocol/ext-apps`) 2.0 + MCP SDK 2.x** is on the branch [`codex/mcp-apps-spec-upgrade`](https://github.com/tonoizer/mcp-apps-spec2-preview/tree/codex/mcp-apps-spec-upgrade). It edits the `dist/` output directly and adds a demo and a verification harness. See the full diff here: [compare `main...codex/mcp-apps-spec-upgrade`](https://github.com/tonoizer/mcp-apps-spec2-preview/compare/main...codex/mcp-apps-spec-upgrade).
->
-> It is meant to be ported into the real upstream `src/` via a PR to `module-federation/mcp-apps`. For production use, install the official package from npm.
+> It is meant to be ported into the real upstream `src/` via a PR to `module-federation/mcp-apps`. Full diff against the 0.0.6 baseline: [compare `main...codex/mcp-apps-spec-upgrade`](https://github.com/tonoizer/mcp-apps-spec2-preview/compare/main...codex/mcp-apps-spec-upgrade). For production use, install the official package from npm.
 
 # Module Federation MCP Apps
 
@@ -166,6 +164,8 @@ export function App({ mcpApp }: { mcpApp?: any }) {
 `examples/demo/` is a self-contained demo: an MCP server built on `createServer()`, one tool (`show_greeting`) with a `ui://mf/demo-remote` MCP App resource, a real Module Federation remote, and a small React host that uses `McpAppRenderer` to call the tool and render the app.
 
 ```bash
+git clone -b codex/mcp-apps-spec-upgrade https://github.com/tonoizer/mcp-apps-spec2-preview.git
+cd mcp-apps-spec2-preview
 npm ci
 npm run demo            # http://localhost:4173/  (Streamable HTTP MCP endpoint: /mcp)
 npm run demo:stdio      # same server over stdio
@@ -177,6 +177,8 @@ npm run demo:screenshot # headless Chrome check + examples/demo/screenshot.png
 See [examples/demo/README.md](./examples/demo/README.md) for details.
 
 ## Try the Demo
+
+> **Note (this preview repo):** `module-federation-examples/basic` lives in the private upstream repo and is not part of the npm package, so it is not in this snapshot. Use [`examples/demo/`](./examples/demo/) (see “Demo” above) for a runnable example.
 
 The repo includes a ready-to-run Module Federation provider with a **Deploy Wizard** demo.
 
