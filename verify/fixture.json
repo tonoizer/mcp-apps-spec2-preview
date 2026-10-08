@@ -1,0 +1,11 @@
+{
+  "remotes": [
+    { "name": "demo_provider", "baseUrl": "http://localhost:8080/mf-manifest.json",
+      "csp": { "connectDomains": ["http://localhost:8080"], "resourceDomains": ["http://localhost:8080", "https://module-federation.io"] } }
+  ],
+  "tools": [
+    { "name": "deploy_wizard_step1", "title": "Deploy Wizard Step 1", "description": "Select application",
+      "inputSchema": { "type": "object", "properties": { "appId": { "type": "string" }, "count": { "type": "number" } } },
+      "remote": "demo_provider", "module": "./DeployWizardStep1", "exportName": "default" }
+  ]
+}
