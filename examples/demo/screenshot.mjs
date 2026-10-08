@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 /**
  * Headless-Chrome check + screenshot of the running demo (no Playwright needed;
- * talks CDP over Node's built-in WebSocket, Node >= 22).
+ * talks CDP over Node's built-in WebSocket: Node >= 22, or Node 20.10+ with
+ * `node --experimental-websocket`).
  *
  *   npm run demo            # in another terminal
  *   npm run demo:screenshot # -> examples/demo/screenshot.png
@@ -17,7 +18,13 @@ const url = process.env.DEMO_URL ?? 'http://localhost:4173/';
 const chrome = process.env.CHROME ?? 'google-chrome';
 const out = process.env.OUT ?? path.join(import.meta.dirname, 'screenshot.png');
 const debugPort = 9300 + Math.floor(Math.random() * 500);
-if (typeof WebSocket === 'undefined') throw new Error('Node >= 22 required (global WebSocket)');
+if (typeof WebSocket === 'undefined') {
+  // Node 20.10+: the global WebSocket is behind a flag — re-run ourselves with it.
+  if (process.execArgv.includes('--experimental-websocket')) throw new Error('global WebSocket missing: use Node >= 22 (or Node 20.10+)');
+  const { spawnSync } = await import('node:child_process');
+  const r = spawnSync(process.execPath, ['--experimental-websocket', ...process.execArgv, ...process.argv.slice(1)], { stdio: 'inherit' });
+  process.exit(r.status ?? 1);
+}
 
 const profile = fs.mkdtempSync(path.join(os.tmpdir(), 'mcp-apps-demo-chrome-'));
 const proc = spawn(chrome, ['--headless=new', '--no-sandbox', '--disable-gpu', '--hide-scrollbars', `--remote-debugging-port=${debugPort}`,

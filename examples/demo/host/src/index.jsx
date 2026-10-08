@@ -36,14 +36,17 @@ function App() {
     let closed = false;
     (async () => {
       try {
+        // 'auto' probes server/discover and speaks MCP 2026-07-28 when offered;
+        // open the page with ?era=legacy to force the 2025-11-25 initialize handshake.
+        const era = new URLSearchParams(location.search).get('era') === 'legacy' ? 'legacy' : 'auto';
         const client = new Client(
           { name: 'mcp-apps-demo-host', version: '1.0.0' },
-          { capabilities: { extensions: { [UI_EXTENSION]: { mimeTypes: [MCP_APP_MIME] } } } },
+          { capabilities: { extensions: { [UI_EXTENSION]: { mimeTypes: [MCP_APP_MIME] } } }, versionNegotiation: { mode: era } },
         );
         await client.connect(new StreamableHTTPClientTransport(MCP_URL));
         if (closed) return;
         clientRef.current = client;
-        setServer(client.getServerVersion());
+        setServer({ ...client.getServerVersion(), protocol: client.getNegotiatedProtocolVersion() });
         setStatus('connected');
         const { tools } = await client.listTools();
         setTools(tools);
@@ -61,7 +64,7 @@ function App() {
       <header style={s.header}>
         <h1 style={s.h1}>MCP Apps demo host</h1>
         <span style={{ ...s.pill, background: status === 'connected' ? '#16a34a' : status === 'error' ? '#dc2626' : '#64748b' }}>
-          {status}{server ? ` · ${server.name}@${server.version}` : ''}
+          {status}{server ? ` · ${server.name}@${server.version} · MCP ${server.protocol}` : ''}
         </span>
       </header>
 

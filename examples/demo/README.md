@@ -6,7 +6,7 @@ A small, self-contained end-to-end demo of the unofficial MCP Apps 2.x preview o
 
 | Piece | File | What it does |
 |---|---|---|
-| MCP server | `server.mjs` | `createServer()` (package public API) + `@modelcontextprotocol/server` `createMcpHandler` → Streamable HTTP at `/mcp`. `--stdio` runs MCP over stdio. |
+| MCP server | `server.mjs` | `createServer()` + `createStreamableHttpHandler` / `serveStdioServer` (package public API, on the SDK's `createMcpHandler` / `serveStdio`) → Streamable HTTP at `/mcp`, or stdio with `--stdio`. Both speak MCP **2026-07-28** (`server/discover`) and **2025-11-25** (`initialize`). |
 | Config | `mcp_apps.json` | One remote (`demo_remote`) and one tool (`show_greeting`) → `ui://mf/demo-remote` (`text/html;profile=mcp-app`). |
 | MF remote | `remote/src/Greeting.jsx` | Real Module Federation remote built with Rsbuild (`remoteEntry.js`, shares React as a singleton). |
 | Host | `host/src/index.jsx` | `@modelcontextprotocol/client` 2.x connects to `/mcp`, runs `tools/list` → `tools/call` → `resources/read`, and renders the result with the package's `McpAppRenderer` (AppBridge 2.x). Shows `ui/message` requests sent back by the app. |
@@ -26,8 +26,15 @@ Other modes:
 
 ```bash
 npm run demo:stdio          # MCP over stdio (MF remote still served on :4173 for the iframe)
-npm run demo:screenshot     # with `npm run demo` running: headless check + examples/demo/screenshot.png (Node >= 22, Chrome)
+npm run demo:screenshot     # with `npm run demo` running: headless check + examples/demo/screenshot.png (Chrome; Node >= 22, or Node 20.10+ — re-runs itself with --experimental-websocket)
 DEMO_PORT=5000 npm run demo # use another port (config is rewritten on the fly)
+```
+
+Inspect it with the official MCP Inspector in either protocol era:
+
+```bash
+npx -y @modelcontextprotocol/inspector@2.10.1 --cli http://localhost:4173/mcp --transport http --protocol-era modern --method tools/list
+npx -y @modelcontextprotocol/inspector@2.10.1 --web http://localhost:4173/mcp   # UI: Apps tab renders the MCP App
 ```
 
 Uses no dependencies beyond what the package already has: Rsbuild, React, express and the MCP SDKs are already in `package.json`. `verify/07-demo.mjs` runs the demo in CI style over HTTP and stdio, plus a headless render when Chrome is available.

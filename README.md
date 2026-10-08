@@ -1,7 +1,7 @@
 > [!IMPORTANT]
 > **Unofficial preview. Not affiliated with, endorsed by, or maintained by the Module Federation team.**
 >
-> The upstream source repository [`module-federation/mcp-apps`](https://github.com/module-federation/mcp-apps) is not public. This repo's `main` branch is a verbatim snapshot of the published npm package [`@module-federation/mcp-apps@0.0.6`](https://www.npmjs.com/package/@module-federation/mcp-apps/v/0.0.6) (its `dist/` build output and docs). **This branch (`codex/mcp-apps-spec-upgrade`) edits that `dist/` output directly** to move to MCP Apps (`@modelcontextprotocol/ext-apps`) 2.0 + MCP SDK 2.x (`@modelcontextprotocol/{server,client,core}`). It also adds a demo (`examples/demo/`) and a verification harness (`verify/`).
+> The upstream source repository [`module-federation/mcp-apps`](https://github.com/module-federation/mcp-apps) is not public. This repo's `main` branch is a verbatim snapshot of the published npm package [`@module-federation/mcp-apps@0.0.6`](https://www.npmjs.com/package/@module-federation/mcp-apps/v/0.0.6) (its `dist/` build output and docs). **This branch (`codex/mcp-apps-spec-upgrade`) edits that `dist/` output directly** to move to MCP Apps (`@modelcontextprotocol/ext-apps`) 2.0 + MCP SDK 2.x (`@modelcontextprotocol/{server,client,core}`), serving MCP **2026-07-28** (`server/discover`) alongside **2025-11-25** on stdio and Streamable HTTP. The embedded MCP App (`dist/mcp-app.html` + shell assets) is rebuilt with ext-apps 2.x from [`ui/mcp-app.jsx`](./ui/mcp-app.jsx), a source reconstruction of the 0.0.6 bundle's shell component. It also adds a demo (`examples/demo/`) and a verification harness (`verify/`). Version: `0.1.0-preview`.
 >
 > It is meant to be ported into the real upstream `src/` via a PR to `module-federation/mcp-apps`. Full diff against the 0.0.6 baseline: [compare `main...codex/mcp-apps-spec-upgrade`](https://github.com/tonoizer/mcp-apps-spec2-preview/compare/main...codex/mcp-apps-spec-upgrade). For production use, install the official package from npm.
 
@@ -82,9 +82,18 @@ In short: MF provides the UI delivery infrastructure that MCP Apps needs, withou
 
 | `@module-federation/mcp-apps` | MCP Apps spec (`@modelcontextprotocol/ext-apps`) | MCP SDK (`@modelcontextprotocol/server`) | Module Federation (`@module-federation/enhanced`) | Tested Claude Desktop |
 |---|---|---|---|---|
-| `0.0.x` | `^2.0.3` | `^2.3.1` | `^2.2.1` | 0.9.x (macOS) |
+| `0.1.0-preview` (this branch) | `^2.0.3` | `^2.3.1` | `^2.2.1` | 0.9.x (macOS, 0.0.x) |
 
-> This package implements **MCP Apps 2.x** (`@modelcontextprotocol/ext-apps` ^2.0.3) on the MCP Core **2.x** SDK (`@modelcontextprotocol/{server,client,core}` ^2.3.1). Default protocol negotiation is the legacy 2025 handshake (latest `2025-11-25`); the modern **2026-07-28** wire revision is available via client `versionNegotiation` when the host opts in. Resource MIME type remains `text/html;profile=mcp-app` (Streamable HTTP + stdio).
+> This preview implements **MCP Apps 2.x** (`@modelcontextprotocol/ext-apps` ^2.0.3) on the MCP Core **2.x** SDK (`@modelcontextprotocol/{server,client,core}` ^2.3.1) and serves **both MCP protocol eras on the same transports**:
+>
+> | | 2026-07-28 ("modern") | 2025-11-25 and older ("legacy") |
+> |---|---|---|
+> | Negotiation | `server/discover` + per-request `_meta` envelope | `initialize` handshake |
+> | Streamable HTTP `/mcp` | SDK `createMcpHandler` | sessionful (`Mcp-Session-Id`, GET SSE, DELETE); session-less JSON-RPC callers still answered statelessly |
+> | stdio (`--stdio`) | SDK `serveStdio` (era picked by the opening message) | same |
+> | Plain-JSON `/mcp-rpc` | `createMcpHandler` (`responseMode: 'json'`) | in-memory, as in 0.0.x |
+>
+> Verified with the official client (pinned, `auto` and legacy negotiation) and with **MCP Inspector 2.10.1** `--protocol-era modern` and `--protocol-era legacy` over HTTP and stdio (`verify/03`, `verify/08`). The same wiring is exported for embedders as `@module-federation/mcp-apps/transports` (`createStreamableHttpHandler`, `serveStdioServer`). Resource MIME type remains `text/html;profile=mcp-app`. Tool input schemas are emitted as JSON Schema **2020-12** (the dialect both revisions default to); `execution.taskSupport` is no longer emitted — absent means `"forbidden"` in 2025-11-25 and the field was removed in 2026-07-28.
 > Hosts that do not support the MCP Apps spec still receive plain-text tool responses — the UI is simply not rendered.
 
 ## Renderer API (for MF module developers)
@@ -474,6 +483,8 @@ The skill is plain Markdown — paste it directly into any chat or custom instru
 Already configured above. Tools will appear in Claude after restart.
 
 ## Development
+
+> **This preview repo:** there is no upstream `src/` here, so `npm run build`/`dev`/`typecheck` (which compile `src/`) do not apply. What does work: `npm ci`, `npm run build:ui` (rebuilds the embedded MCP App — `dist/mcp-app.html`, `dist/mcp-app-shell.html`, `dist/static/` — from [`ui/mcp-app.jsx`](./ui/mcp-app.jsx) with ext-apps 2.x), `npm run demo*` and `npm run verify`. All scripts use npm (the repo ships `package-lock.json`); upstream instructions below that say `pnpm` refer to the upstream repo.
 
 ```bash
 # Install dependencies
