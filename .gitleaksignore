@@ -1,0 +1,4 @@
+# False positives: the bundled `jose` library (pulled in via the MCP SDK client) checks
+# whether a string *starts with* "-----BEGIN PRIVATE KEY-----". No key material.
+dist/mcp-app.html:private-key:13
+dist/static/js/561.js:private-key:101
